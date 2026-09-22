@@ -457,7 +457,6 @@ header .mark svg{width:100%;height:100%;display:block}
 /* 키보드로 옮겨 다닐 때만 같은 보라 테두리가 따라온다 */
 .day:focus-visible .n{box-shadow:0 0 0 2.5px var(--violet)}
 .day.sel:focus .n{box-shadow:0 0 0 2.5px var(--violet)}
-.day .dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--amber)}
 
 .note{font-size:var(--fs-sm);color:var(--ink-2);background:var(--bg1);
   border-radius:var(--r-sm);padding:8px 10px;margin-top:9px;line-height:1.5}
@@ -475,7 +474,7 @@ footer{font-size:var(--fs-2xs);color:var(--on-bg-dim);text-align:center;line-hei
    크기와 색으로만 위계를 준다. 굵기를 얹으면 획이 뭉쳐 두꺼워 보인다. */
 header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 .carryover h2,.sec-title,.day .n,.eyebrow,.when,.badge,.cheer,
-.keep .meta b,.syncbox h3,.syncbox p b,.day.today .n,.day.sel .n{font-weight:400}
+.keep .meta b,.syncbox p b,.day.today .n,.day.sel .n{font-weight:400}
 .badge{letter-spacing:-.01em}
 
 /* ── 기록 보관 ──────────────────────────────────────────── */
@@ -487,7 +486,26 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   border:0;border-radius:var(--r-md);
   padding:13px 15px 14px;
 }
-.keep h2{font-size:var(--fs-lg);font-weight:600;margin:0 0 2px;color:var(--violet)}
+/* 접었다 펴는 머리글 — 평소에는 제목과 한 줄 요약만 보인다 */
+.sec-head{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  min-height:var(--tap);padding:2px 0;
+}
+.sec-t{font-size:var(--fs-lg);color:var(--violet);flex:none}
+.syncbox.on .sec-t{color:var(--pulse)}
+.sec-sum{
+  flex:1;min-width:0;font-size:var(--fs-2xs);color:var(--ink-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;
+}
+.sec-sum.warn{color:var(--coral)}
+.chev{
+  flex:none;width:20px;height:20px;color:var(--ink-3);
+  transition:transform .18s var(--ease);
+}
+.chev svg{width:20px;height:20px;display:block}
+.sec-head.open .chev{transform:rotate(180deg)}
+.sec-head.open .sec-sum{opacity:.55}
+.sec-body{padding-top:3px}
 .keep .status{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.55}
 .keep .status b{font-weight:400;color:var(--pulse-strong)}
 .keep .status .warn,.keep .meta .warn{color:var(--coral)}
@@ -529,10 +547,8 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 
 /* 함께 보기 칸 */
 .syncbox{
-  margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);
+  margin-top:9px;padding-top:6px;border-top:1px dashed var(--line);
 }
-.syncbox h3{font-size:var(--fs-md);font-weight:600;margin:0 0 3px;color:var(--violet)}
-.syncbox.on h3{color:var(--pulse)}
 .syncbox p{font-size:var(--fs-2xs);color:var(--ink-3);line-height:1.6;margin:0}
 .syncbox p b{font-weight:600;color:var(--ink-2)}
 .syncbox .sst{font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:3px}
@@ -620,7 +636,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-17q</span>
+    <span class="ver">v2026-09-22b</span>
   </footer>
 </div>
 
@@ -668,6 +684,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       down:'<path d="M12 3.5v12M7 11l5 5 5-5M4.5 20h15"/>',
       up:'<path d="M12 20.5v-12M7 13l5-5 5 5M4.5 4h15"/>',
       plus:'<path d="M12 5v14M5 12h14"/>',
+      chev:'<path d="M6 9.5l6 6 6-6"/>',
       link:'<path d="M10.2 13.8a4 4 0 0 0 5.7 0l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.3 1.3"/>'+
            '<path d="M13.8 10.2a4 4 0 0 0-5.7 0l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.3-1.3"/>',
       /* 축구공 — 가운데 오각형과 그것을 둘러싼 다섯 조각.
@@ -1141,10 +1158,8 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       if(st.complete) mark='<span class="dst">'+sticker(daySticker(key),pop==="day:"+key)+'</span>';
       else if(st.total>0) mark='<span class="prog"><i style="width:'+
         Math.round(st.done/st.total*100)+'%"></i></span>';
-      var pending=todosFor(key).some(function(t){return !t.done;});
       cells+='<button class="'+cls+'" data-open="'+key+'"'+
         (key===SEL?' aria-current="date"':"")+'>'+
-        (pending?'<span class="dot"></span>':"")+
         '<span class="n">'+day+'</span>'+mark+'</button>';
     }
     $("grid").innerHTML=cells;
@@ -1378,11 +1393,17 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       (host?'<br>저장 위치 <b>'+esc(host)+'</b>':'')+
       '</div>';
 
+    var sum=!canStore ? '저장 막힘'
+          : (stale ? (bak?'백업 오래됨':'백업 없음') : '백업 '+bak);
+
     $("keepPanel").innerHTML=
-      '<h2>기록 보관</h2>'+status+meta+
-      '<div class="acts">'+
-        '<button class="btn primary" id="doExport">'+icon("down")+'백업 파일 저장</button>'+
-        '<button class="btn" id="doImport">'+icon("up")+'백업 불러오기</button>'+
+      secHead("keep","기록 보관",sum,!canStore||stale)+
+      '<div class="sec-body"'+(secOpen.keep?"":" hidden")+'>'+
+        status+meta+
+        '<div class="acts">'+
+          '<button class="btn primary" id="doExport">'+icon("down")+'백업 파일 저장</button>'+
+          '<button class="btn" id="doImport">'+icon("up")+'백업 불러오기</button>'+
+        '</div>'+
       '</div>'+
       syncBox();
   }
@@ -1396,38 +1417,62 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   }
 
   function syncBox(){
+    /* 연결 상태를 머리글에 한 줄로 요약한다 — 펼치지 않아도 보이게 */
+    var sum,warn=false;
+    if(!sync){ sum="꺼짐"; }
+    else if(syncErr){ sum="연결 안 됨"; warn=true; }
+    else if(syncing){ sum="주고받는 중"; }
+    else { sum="켜짐"; }
+
+    var open=secOpen.sync||syncForm;   /* 설정하는 중이면 접지 않는다 */
+    var body;
+
     if(!sync){
       if(!syncForm){
-        return '<div class="syncbox"><h3>함께 보기</h3>'+
-          '<p>다른 사람 폰에서도 같은 기록을 보고 체크하게 만들 수 있어요. '+
+        body='<p>다른 사람 폰에서도 같은 기록을 보고 체크하게 만들 수 있어요. '+
           '한 번만 설정하면 링크를 보내는 것으로 끝나요.</p>'+
-          '<div class="acts"><button class="btn" id="syncStart">'+icon("link")+'함께 보기 설정</button></div></div>';
+          '<div class="acts"><button class="btn" id="syncStart">'+icon("link")+'함께 보기 설정</button></div>';
+      }else{
+        body=(prefillDb()
+            ? '<p>다른 앱에서 쓰던 주소를 채워 뒀어요. <b>연결</b>만 누르면 두 앱이 같은 곳을 보게 돼요.</p>'
+            : '<p>Firebase 실시간 데이터베이스 주소를 붙여넣어 주세요. '+
+              '<b>https://</b> 로 시작하고 <b>firebasedatabase.app</b> 으로 끝나는 주소예요.</p>')+
+          '<div class="fld"><input type="text" id="syncUrlIn" value="'+esc(prefillDb())+'" '+
+          'placeholder="https://....firebasedatabase.app" '+
+          'inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></div>'+
+          (syncMsg?'<div class="cerr">'+esc(syncMsg)+'</div>':'')+
+          '<div class="acts">'+
+            '<button class="btn" id="syncCancel">취소</button>'+
+            '<button class="btn primary" id="syncSave">연결</button>'+
+          '</div>';
       }
-      return '<div class="syncbox"><h3>함께 보기 설정</h3>'+
-        (prefillDb()
-          ? '<p>다른 앱에서 쓰던 주소를 채워 뒀어요. <b>연결</b>만 누르면 두 앱이 같은 곳을 보게 돼요.</p>'
-          : '<p>Firebase 실시간 데이터베이스 주소를 붙여넣어 주세요. '+
-            '<b>https://</b> 로 시작하고 <b>firebasedatabase.app</b> 으로 끝나는 주소예요.</p>')+
-        '<div class="fld"><input type="text" id="syncUrlIn" value="'+esc(prefillDb())+'" '+
-        'placeholder="https://....firebasedatabase.app" '+
-        'inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></div>'+
-        (syncMsg?'<div class="cerr">'+esc(syncMsg)+'</div>':'')+
+    }else{
+      var st = syncErr ? '<span class="warn">연결이 안 돼요 — 인터넷을 확인해 주세요</span>'
+             : syncing ? '주고받는 중…'
+             : (syncAt ? '마지막 동기화 '+whenLabel(new Date(syncAt).toISOString()) : '연결됨');
+      body='<p class="sst">'+st+'</p>'+
+        '<p>아래 버튼으로 링크를 보내면, 받은 사람도 같은 기록을 보고 체크할 수 있어요.</p>'+
         '<div class="acts">'+
-          '<button class="btn" id="syncCancel">취소</button>'+
-          '<button class="btn primary" id="syncSave">연결</button>'+
-        '</div></div>';
+          '<button class="btn primary" id="syncShare">'+icon("link")+'링크 보내기</button>'+
+          '<button class="btn" id="syncOff">연결 끊기</button>'+
+        '</div>';
     }
 
-    var st = syncErr ? '<span class="warn">연결이 안 돼요 — 인터넷을 확인해 주세요</span>'
-           : syncing ? '주고받는 중…'
-           : (syncAt ? '마지막 동기화 '+whenLabel(new Date(syncAt).toISOString()) : '연결됨');
-    return '<div class="syncbox on"><h3>함께 보기 켜짐</h3>'+
-      '<p class="sst">'+st+'</p>'+
-      '<p>아래 버튼으로 링크를 보내면, 받은 사람도 같은 기록을 보고 체크할 수 있어요.</p>'+
-      '<div class="acts">'+
-        '<button class="btn primary" id="syncShare">'+icon("link")+'링크 보내기</button>'+
-        '<button class="btn" id="syncOff">연결 끊기</button>'+
-      '</div></div>';
+    return '<div class="syncbox'+(sync?" on":"")+'">'+
+      secHead("sync","함께 보기",sum,warn)+
+      '<div class="sec-body"'+(open?"":" hidden")+'>'+body+'</div></div>';
+  }
+
+  /* 접었다 펴는 칸 — 평소에는 접혀 있고, 눌렀을 때만 열린다.
+     앱을 다시 열면 다시 접힌 상태로 돌아온다. */
+  var secOpen={keep:false,sync:false};
+
+  function secHead(id,title,summary,warn){
+    return '<button class="sec-head'+(secOpen[id]?" open":"")+'" data-sec="'+id+'" '+
+      'aria-expanded="'+(secOpen[id]?"true":"false")+'">'+
+      '<span class="sec-t">'+title+'</span>'+
+      '<span class="sec-sum'+(warn?" warn":"")+'">'+summary+'</span>'+
+      '<span class="chev">'+icon("chev")+'</span></button>';
   }
 
   /* --- 홈 화면에 추가 --- */
@@ -1720,8 +1765,16 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       }
     }
 
+    /* 접었다 펴기 */
+    if((el=up(e.target,"[data-sec]"))){
+      var sid=el.getAttribute("data-sec");
+      secOpen[sid]=!secOpen[sid];
+      if(sid==="sync"&&!secOpen.sync){syncForm=false;syncMsg="";}
+      renderKeep();return;
+    }
+
     /* 함께 보기 */
-    if(up(e.target,"#syncStart")){syncForm=true;syncMsg="";renderKeep();return;}
+    if(up(e.target,"#syncStart")){syncForm=true;secOpen.sync=true;syncMsg="";renderKeep();return;}
     if(up(e.target,"#syncCancel")){syncForm=false;syncMsg="";renderKeep();return;}
     if(up(e.target,"#syncSave")){
       var box=$("syncUrlIn");
