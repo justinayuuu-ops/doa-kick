@@ -200,8 +200,8 @@ header .mark{
 header .mark svg{width:100%;height:100%;display:block}
 /* '킥' 옆의 공 — 훈련을 하나 끝낼 때마다 실제로 차인다 */
 .kick{
-  display:inline-block;vertical-align:-.13em;
-  width:.92em;height:.92em;margin-left:1px;
+  display:inline-block;vertical-align:-.19em;
+  width:1.08em;height:1.08em;margin-left:2px;
   color:inherit;transform-origin:50% 80%;
 }
 .kick svg{width:100%;height:100%;display:block}
@@ -249,6 +249,12 @@ header .mark svg{width:100%;height:100%;display:block}
   box-shadow:var(--shadow-1);
   padding:11px 13px 10px;
 }
+@keyframes panelflash{
+  0%{box-shadow:0 0 0 0 var(--pulse-dim)}
+  28%{box-shadow:0 0 0 5px var(--pulse-dim)}
+  100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}
+}
+.daypanel.flash{animation:panelflash .95s var(--ease)}
 .today-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .when{
   display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;
@@ -636,7 +642,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-22b</span>
+    <span class="ver">v2026-09-22c</span>
   </footer>
 </div>
 
@@ -824,7 +830,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     state.todos.forEach(function(t){
       /* 반복으로 만든 할 일은 이관하지 않는다 — 매주 돌아오는 일이라
          하루 걸렀다고 오늘로 몰아오면 목록이 금세 쌓인다. */
-      if(!t.done&&!t.del&&t.date<CUR&&!t.series){
+      if(!t.done&&!t.del&&t.date<CUR&&!t.series&&!t.back){
         if(!t.origDate) t.origDate=t.date;
         t.date=CUR; moved=true;
       }
@@ -874,6 +880,9 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 
   function pushTodo(d,text,count,unit,series){
     var t={id:newId(),date:d,text:text,done:false,u:Date.now()};
+    /* 지난 날짜에 일부러 넣은 훈련은 그 날에 그대로 둔다 —
+       그날 한 일을 뒤늦게 적는 경우이므로 오늘로 끌어오면 안 된다. */
+    if(d<CUR) t.back=true;
     if(count){t.count=count;t.unit=unit||"개";}
     if(series) t.series=series;
     state.todos.push(t);
@@ -1111,7 +1120,13 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     view.y=p.getFullYear(); view.m=p.getMonth();
     renderAll();
     if(scroll){
-      try{$("dayPanel").scrollIntoView({block:"start",behavior:"smooth"});}catch(e){}
+      /* 이미 그 날을 보고 있어도 눌린 것이 보이도록 패널을 한 번 깜빡인다 */
+      var panel=$("dayPanel");
+      try{panel.scrollIntoView({block:"start",behavior:"smooth"});}catch(e){}
+      panel.classList.remove("flash");
+      void panel.offsetWidth;          /* 애니메이션을 다시 태우기 위한 한 박자 */
+      panel.classList.add("flash");
+      setTimeout(function(){panel.classList.remove("flash");},1000);
     }
   }
 
