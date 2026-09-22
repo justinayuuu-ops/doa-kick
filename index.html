@@ -294,7 +294,8 @@ header .mark svg{width:100%;height:100%;display:block}
 .todo.on .box{color:var(--pulse)}
 
 .todo .txt{flex:1;min-width:0;font-size:var(--fs-md);word-break:break-word;line-height:1.4}
-.todo.on .txt{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--line)}
+/* 해낸 훈련은 지우는 게 아니라 해냈다는 표시다 — 공과 같은 초록으로 물든다 */
+.todo.on .txt{color:var(--pulse)}
 .todo .tst{flex:none;width:30px;height:30px}
 .todo .tst .st{width:30px;height:30px}
 .t-count{flex:none;font-size:var(--fs-md);color:var(--ink-3);font-variant-numeric:tabular-nums}
@@ -642,7 +643,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-22c</span>
+    <span class="ver">v2026-09-22d</span>
   </footer>
 </div>
 
