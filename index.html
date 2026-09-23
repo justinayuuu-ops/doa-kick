@@ -666,7 +666,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-23d</span>
+    <span class="ver">v2026-09-23e</span>
   </footer>
 </div>
 
@@ -1074,11 +1074,19 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 
   /* ---------- 할 일 만들기 폼 ---------- */
   var composer=null;   /* {date, where, text, count, unit, mode, from, to, dows, err} */
-  var UNITS=["개","분"];
+  /* 훈련량의 단위 — 먼저 종류를 고르고, 그 안에서 단위를 고른다 */
+  var KINDS=[
+    {id:"num", name:"숫자", units:["개","회","세트"]},
+    {id:"time",name:"시간", units:["분","시간"]}
+  ];
+  function kindOf(id){
+    for(var i=0;i<KINDS.length;i++) if(KINDS[i].id===id) return KINDS[i];
+    return KINDS[0];
+  }
 
   function openComposer(d,where){
     composer={
-      date:d, where:where, text:"", count:"", unit:"개",
+      date:d, where:where, text:"", count:"", kind:"num", unit:"개",
       mode:"one", from:d, to:clampDate(shift(d,27)),
       dows:[0,1,2,3,4,5,6], err:""
     };
@@ -1092,7 +1100,10 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
         icon("plus")+'훈련 추가</button>';
     }
     var c=composer;
-    var units=UNITS.map(function(u){
+    var kinds=KINDS.map(function(k){
+      return '<button class="chip'+(c.kind===k.id?" on":"")+'" data-kind="'+k.id+'">'+k.name+'</button>';
+    }).join("");
+    var units=kindOf(c.kind).units.map(function(u){
       return '<button class="chip'+(c.unit===u?" on":"")+'" data-unit="'+u+'">'+u+'</button>';
     }).join("");
     var modes='<button class="chip'+(c.mode==="one"?" on":"")+'" data-mode="one">하루만</button>'+
@@ -1123,8 +1134,9 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
         '<div class="fld num"><span class="lb">훈련량</span>'+
           '<input type="number" data-c="count" value="'+esc(String(c.count))+'" '+
           'inputmode="numeric" min="1" max="999" placeholder="20"></div>'+
-        '<div class="fld unit"><span class="lb">단위</span><div class="chips">'+units+'</div></div>'+
+        '<div class="fld unit"><span class="lb">종류</span><div class="chips">'+kinds+'</div></div>'+
       '</div>'+
+      '<div class="fld"><span class="lb">단위</span><div class="chips">'+units+'</div></div>'+
       '<div class="fld"><span class="lb">언제</span><div class="chips">'+modes+'</div></div>'+
       period+
       (c.err?'<div class="cerr">'+esc(c.err)+'</div>':'')+
@@ -1843,6 +1855,11 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       renderAll();return;
     }
     if(composer){
+      if((el=up(e.target,"[data-kind]"))){
+        composer.kind=el.getAttribute("data-kind");
+        composer.unit=kindOf(composer.kind).units[0];
+        renderAll();return;
+      }
       if((el=up(e.target,"[data-unit]"))){composer.unit=el.getAttribute("data-unit");renderAll();return;}
       if((el=up(e.target,"[data-mode]"))){composer.mode=el.getAttribute("data-mode");composer.err="";renderAll();return;}
       if((el=up(e.target,"[data-dow]"))){
