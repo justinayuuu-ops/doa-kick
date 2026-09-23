@@ -293,12 +293,13 @@ header .mark svg{width:100%;height:100%;display:block}
 .todo .box svg{width:100%;height:100%;display:block}
 .todo.on .box{color:var(--pulse)}
 
-.todo .txt{flex:1;min-width:0;font-size:var(--fs-md);word-break:break-word;line-height:1.4}
+.todo .txt{flex:1;min-width:0;font-size:var(--fs-md);word-break:break-word;line-height:1.4;
+  text-align:left;padding:2px 0}
 /* 해낸 훈련은 지우는 게 아니라 해냈다는 표시다 — 공과 같은 초록으로 물든다 */
 .todo.on .txt{color:var(--pulse)}
 .todo .tst{flex:none;width:30px;height:30px}
 .todo .tst .st{width:30px;height:30px}
-.t-count{flex:none;font-size:var(--fs-md);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.t-count{flex:none;font-size:var(--fs-md);color:var(--ink-3);font-variant-numeric:tabular-nums;padding:2px 0}
 .t-count u{text-decoration:none;font-size:var(--fs-xs)}
 .todo.on .t-count{color:var(--pulse)}
 .carry{
@@ -344,6 +345,11 @@ header .mark svg{width:100%;height:100%;display:block}
 /* 단위 두 줄 — 위는 종류(숫자·시간), 아래는 그 종류의 단위 */
 .chips.sub{margin-top:5px}
 .chips.sub .chip{padding:0 10px;font-size:var(--fs-xs)}
+.ordhint{align-self:center;font-size:var(--fs-2xs);color:var(--ink-3);margin-left:2px}
+.chip[disabled]{opacity:.35}
+/* 고치기 폼은 목록 한 줄 자리에 그대로 펼쳐진다 */
+.composer.edit{margin:4px 0 6px}
+.btn.warn{color:var(--coral);border-color:var(--coral)}
 .chip{
   display:inline-flex;align-items:center;justify-content:center;
   min-height:var(--pill);padding:0 12px;border-radius:999px;font-size:var(--fs-sm);
@@ -588,6 +594,17 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 .syncbox p.hint{margin-top:5px;padding:7px 9px;background:var(--bg1);border-radius:var(--r-sm)}
 .syncbox .sst .warn{color:var(--coral)}
 .syncbox .acts{display:flex;gap:7px;margin-top:9px}
+/* 칭찬 스티커 규칙 — 숫자 두 칸을 한 줄에 */
+.rulefld{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:9px}
+.rulefld .lb{font-size:var(--fs-2xs);color:var(--ink-3);flex:none}
+.rulefld input{
+  flex:0 0 74px;min-width:0;height:var(--pill);
+  font-family:inherit;font-size:16px;color:var(--ink);text-align:center;
+  background:var(--field);border:2px solid var(--line);border-radius:var(--r-sm);
+  -webkit-appearance:none;appearance:none;
+}
+.rulefld input:focus{border-color:var(--pulse-dim);outline:0}
+.rulebox .sst b{color:var(--pulse-strong)}
 .syncbox .acts .btn{flex:1}
 .syncbox input{
   width:100%;font-family:inherit;font-size:16px;min-height:var(--tap);
@@ -671,7 +688,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-23g</span>
+    <span class="ver">v2026-09-23i</span>
   </footer>
 </div>
 
@@ -818,6 +835,8 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       dmeta:(p.dmeta&&typeof p.dmeta==="object")?p.dmeta:{},
       todos:Array.isArray(p.todos)?p.todos:[],
       mcut:typeof p.mcut==="string"?p.mcut:null,
+      rule:(p.rule&&typeof p.rule==="object")?{days:+p.rule.days||7,count:+p.rule.count||1}:null,
+      ruleAt:+p.ruleAt||0,
       seed:!!p.seed,
       savedAt:p.savedAt||null,
       backupAt:p.backupAt||null
@@ -833,7 +852,8 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       if(b){try{got=normalize(JSON.parse(b));}catch(e){got=null;}}
       if(got&&raw) restored=true;
     }
-    var base=got||{v:DATA_V,done:{},dmeta:{},todos:[],mcut:null,seed:false,savedAt:null,backupAt:null};
+    var base=got||{v:DATA_V,done:{},dmeta:{},todos:[],mcut:null,rule:null,ruleAt:0,seed:false,savedAt:null,backupAt:null};
+    if(!base.rule) base.rule={days:7,count:1};   /* 기본 규칙 — 7일 완성마다 스티커 1개 */
     if(!base.dmeta) base.dmeta={};
     /* 고정 미션을 걷어낸 날을 한 번만 적어 둔다 — 그 전날까지는 옛 기록을
        그대로 읽고, 그날부터는 직접 추가한 훈련만 센다. */
@@ -903,12 +923,39 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   /* 지운 할 일은 곧바로 없애지 않고 표시만 남긴다 —
      그래야 다른 기기에도 '지웠다'는 사실이 전달된다. */
   function liveTodos(){return state.todos.filter(function(t){return !t.del;});}
-  function todosFor(d){return state.todos.filter(function(t){return t.date===d&&!t.del;});}
+  /* 목록 순서는 ord 로 정한다 — 기기끼리 합쳐도 같은 순서로 보인다 */
+  function todosFor(d){
+    return state.todos.filter(function(t){return t.date===d&&!t.del;})
+      .sort(function(a,b){return (a.ord||0)-(b.ord||0);});
+  }
+  /* 예전에 만든 훈련에는 ord 가 없다 — 지금 순서를 그대로 번호로 굳힌다 */
+  function normOrder(){
+    var by={},changed=false;
+    state.todos.forEach(function(t){ if(t.del) return; (by[t.date]=by[t.date]||[]).push(t); });
+    Object.keys(by).forEach(function(d){
+      by[d].forEach(function(t,i){ if(typeof t.ord!=="number"){ t.ord=i; changed=true; } });
+    });
+    return changed;
+  }
+  /* 한 칸 위/아래로 — 같은 날 안에서만 자리를 바꾼다 */
+  function moveTodo(id,dir){
+    var list=null,me=null;
+    state.todos.forEach(function(t){ if(t.id===id) me=t; });
+    if(!me) return false;
+    list=todosFor(me.date);
+    var i=list.indexOf(me), j=i+dir;
+    if(i<0||j<0||j>=list.length) return false;
+    var a=list[i], b=list[j], tmp=a.ord;
+    a.ord=b.ord; b.ord=tmp;
+    a.u=Date.now(); b.u=Date.now();
+    save();
+    return true;
+  }
 
   function newId(){return "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
   function pushTodo(d,text,count,unit,series){
-    var t={id:newId(),date:d,text:text,done:false,u:Date.now()};
+    var t={id:newId(),date:d,text:text,done:false,u:Date.now(),ord:todosFor(d).length};
     /* 지난 날짜에 일부러 넣은 훈련은 그 날에 그대로 둔다 —
        그날 한 일을 뒤늦게 적는 경우이므로 오늘로 끌어오면 안 된다. */
     if(d<CUR) t.back=true;
@@ -1014,8 +1061,13 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       if(isComplete(d)) doneDays++;
       past++; d=shift(d,1);
     }
-    /* 하루 훈련을 다 해내면 한 시간으로 친다 — 해낸 날이 곧 훈련 시간 */
-    return {doneDays:doneDays,hours:doneDays,past:past,total:TOTAL};
+    /* 칭찬 스티커 — 해낸 날이 규칙(며칠)만큼 쌓일 때마다 정해진 개수를 준다.
+       주고 나면 셈은 0부터 다시 시작한다(나머지가 곧 지금까지 쌓인 날). */
+    var r=state.rule||{days:7,count:1};
+    var earned=Math.floor(doneDays/r.days)*r.count;
+    var left=r.days-(doneDays%r.days);
+    return {doneDays:doneDays,past:past,total:TOTAL,
+            stickers:earned,toNext:(doneDays?left:r.days),rule:r};
   }
   /* 밀린 날 — 지난 날 가운데 아직 체크하지 못한 훈련이 남아 있는 날.
      훈련을 하나도 넣지 않은 날은 채울 것이 없으므로 목록에 올리지 않는다
@@ -1051,26 +1103,24 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     $("board").innerHTML=
       '<div class="cell"><span class="v'+beat+'">'+st+'<u>일</u></span><span class="k">연속 달성</span></div>'+
       '<div class="cell"><span class="v">'+t.doneDays+'<u>일</u></span><span class="k">해낸 날</span></div>'+
-      '<div class="cell"><span class="v">'+t.hours.toLocaleString("ko-KR")+'<u>시간</u></span><span class="k">누적 훈련 시간</span></div>';
+      '<div class="cell"><span class="v">'+t.stickers.toLocaleString("ko-KR")+'<u>개</u></span><span class="k">칭찬 스티커</span></div>';
   }
 
   function todoList(d){
     var list=todosFor(d);
     if(!list.length) return '<div class="empty">추가한 훈련이 없어요.</div>';
-    return list.map(function(t){
+    return list.map(function(t,idx){
+      if(composer&&composer.editId===t.id) return editArea(t,idx,list.length);
       var late=0;
       if(t.origDate&&!t.done) late=Math.round((parse(t.date)-parse(t.origDate))/86400000);
       var badge=late>0?'<span class="carry'+(late>=7?" long":"")+'">'+late+'일 이관</span>':"";
       if(t.skip&&!t.done) badge+='<span class="carry skip">건너뜀</span>';
       var key="t:"+t.id;
-      var cnt=t.count
-        ? '<span class="t-count">'+t.count+'<u>'+esc(t.unit||"개")+'</u></span>'
-        : '';
       return '<div class="todo'+(t.done?" on":"")+'">'+
         '<button class="box" data-todo="'+t.id+'" aria-label="완료 표시">'+icon("ball")+'</button>'+
-        '<span class="txt">'+esc(t.text)+badge+'</span>'+
+        '<button class="txt" data-edit="'+t.id+'">'+esc(t.text)+badge+'</button>'+
         '<span class="tst">'+(t.done?sticker("smile",pop===key):"")+'</span>'+
-        cnt+
+        (t.count?'<button class="t-count" data-edit="'+t.id+'">'+t.count+'<u>'+esc(t.unit||"개")+'</u></button>':'')+
         '<button class="del" data-del="'+t.id+'" aria-label="삭제">'+icon("close")+'</button>'+
         '</div>';
     }).join("");
@@ -1149,6 +1199,51 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       '<div class="cacts">'+
         '<button class="btn" data-compose-cancel>취소</button>'+
         '<button class="btn primary" data-compose-save>만들기</button>'+
+      '</div></div>';
+  }
+
+  /* 이미 만든 훈련 고치기 — 이름·훈련량·단위, 그리고 목록 순서 */
+  function openEditor(t){
+    var kind="num";
+    KINDS.forEach(function(k){ if(k.units.indexOf(t.unit||"개")>=0) kind=k.id; });
+    composer={
+      date:t.date, where:"today", editId:t.id,
+      text:t.text, count:t.count?String(t.count):"", kind:kind, unit:t.unit||"개",
+      mode:"one", from:t.date, to:t.date, dows:[0,1,2,3,4,5,6], err:""
+    };
+  }
+
+  function editArea(t,idx,total){
+    var c=composer;
+    var kinds=KINDS.map(function(k){
+      return '<button class="chip'+(c.kind===k.id?" on":"")+'" data-kind="'+k.id+'">'+k.name+'</button>';
+    }).join("");
+    var units=kindOf(c.kind).units.map(function(u){
+      return '<button class="chip'+(c.unit===u?" on":"")+'" data-unit="'+u+'">'+u+'</button>';
+    }).join("");
+    return '<div class="composer edit">'+
+      '<div class="fld"><span class="lb">훈련</span>'+
+        '<input type="text" data-c="text" value="'+esc(c.text)+'" maxlength="60" '+INPUT_ATTRS+'></div>'+
+      '<div class="row2">'+
+        '<div class="fld num"><span class="lb">훈련량</span>'+
+          '<input type="number" data-c="count" value="'+esc(String(c.count))+'" '+
+          'inputmode="numeric" min="1" max="999" placeholder="20"></div>'+
+        '<div class="fld unit"><span class="lb">단위</span>'+
+          '<div class="chips">'+kinds+'</div>'+
+          '<div class="chips sub">'+units+'</div></div>'+
+      '</div>'+
+      (total>1
+        ? '<div class="fld"><span class="lb">순서</span><div class="chips">'+
+            '<button class="chip" data-shift="-1"'+(idx===0?" disabled":"")+'>위로</button>'+
+            '<button class="chip" data-shift="1"'+(idx===total-1?" disabled":"")+'>아래로</button>'+
+            '<span class="ordhint">'+(idx+1)+' / '+total+'</span>'+
+          '</div></div>'
+        : '')+
+      (c.err?'<div class="cerr">'+esc(c.err)+'</div>':'')+
+      '<div class="cacts">'+
+        '<button class="btn warn" data-edit-del="'+t.id+'">삭제</button>'+
+        '<button class="btn" data-compose-cancel>취소</button>'+
+        '<button class="btn primary" data-edit-save>저장</button>'+
       '</div></div>';
   }
 
@@ -1514,7 +1609,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
           '<button class="btn" id="doImport">'+icon("up")+'백업 불러오기</button>'+
         '</div>'+
       '</div>'+
-      syncBox();
+      syncBox()+stickerBox();
   }
 
   /* --- 함께 보기 칸 --- */
@@ -1581,7 +1676,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 
   /* 접었다 펴는 칸 — 평소에는 접혀 있고, 눌렀을 때만 열린다.
      앱을 다시 열면 다시 접힌 상태로 돌아온다. */
-  var secOpen={keep:false,sync:false};
+  var secOpen={keep:false,sync:false,sticker:false};
 
   function secHead(id,title,summary,warn){
     return '<button class="sec-head'+(secOpen[id]?" open":"")+'" data-sec="'+id+'" '+
@@ -1589,6 +1684,29 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
       '<span class="sec-t">'+title+'</span>'+
       '<span class="sec-sum'+(warn?" warn":"")+'">'+summary+'</span>'+
       '<span class="chev">'+icon("chev")+'</span></button>';
+  }
+
+  /* 칭찬 스티커 규칙 칸 — 며칠 완성마다 몇 개를 줄지 정한다 */
+  var ruleMsg="";
+  function stickerBox(){
+    var t=tally(), r=t.rule;
+    var sum=t.stickers+"개";
+    var body='<p class="sst">'+
+        '<b>'+r.days+'일</b> 완성할 때마다 칭찬 스티커 <b>'+r.count+'개</b>'+
+        '</p>'+
+      '<p>해낸 날이 '+r.days+'일 쌓이면 스티커를 주고, 다음 날부터 처음부터 다시 세요. '+
+        '지금까지 '+t.doneDays+'일 해냈고 <b>'+t.toNext+'일</b> 더 하면 다음 스티커예요.</p>'+
+      '<div class="rulefld">'+
+        '<span class="lb">며칠마다</span>'+
+        '<input type="number" id="ruleDays" value="'+r.days+'" min="1" max="365" inputmode="numeric">'+
+        '<span class="lb">스티커</span>'+
+        '<input type="number" id="ruleCount" value="'+r.count+'" min="1" max="99" inputmode="numeric">'+
+      '</div>'+
+      (ruleMsg?'<div class="cerr">'+esc(ruleMsg)+'</div>':'')+
+      '<div class="acts"><button class="btn primary" id="ruleSave">'+icon("check")+'저장</button></div>';
+    return '<div class="syncbox rulebox">'+
+      secHead("sticker","칭찬 스티커",sum,false)+
+      '<div class="sec-body"'+(secOpen.sticker?"":" hidden")+'>'+body+'</div></div>';
   }
 
   /* --- 홈 화면에 추가 --- */
@@ -1734,6 +1852,11 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     if(typeof rem.mcut==="string"&&(!state.mcut||rem.mcut<state.mcut)){
       state.mcut=rem.mcut; changed=true;
     }
+    /* 스티커 규칙은 나중에 고친 쪽이 이긴다 */
+    if(rem.rule&&(+rem.ruleAt||0)>(+state.ruleAt||0)){
+      state.rule={days:+rem.rule.days||7,count:+rem.rule.count||1};
+      state.ruleAt=+rem.ruleAt||0; changed=true;
+    }
 
     Object.keys(rd).forEach(function(d){
       var mine=state.dmeta[d]||0, theirs=rm[d]||0;
@@ -1764,7 +1887,8 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   }
 
   function payload(){
-    return {done:state.done,dmeta:state.dmeta,todos:state.todos,mcut:state.mcut,at:Date.now()};
+    return {done:state.done,dmeta:state.dmeta,todos:state.todos,mcut:state.mcut,
+            rule:state.rule,ruleAt:state.ruleAt||0,at:Date.now()};
   }
 
   function pull(then){
@@ -1855,6 +1979,39 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     var el;
     askPersist();   /* 첫 조작 때 저장 공간 보호를 요청한다 */
 
+    /* 훈련 고치기 */
+    if((el=up(e.target,"[data-edit]"))){
+      var eid=el.getAttribute("data-edit");
+      var et=state.todos.filter(function(x){return x.id===eid;})[0];
+      if(et){openEditor(et);renderAll();}
+      return;
+    }
+    if(composer&&composer.editId){
+      if((el=up(e.target,"[data-shift]"))&&!el.disabled){
+        if(moveTodo(composer.editId,parseInt(el.getAttribute("data-shift"),10))) renderAll();
+        return;
+      }
+      if((el=up(e.target,"[data-edit-del]"))){
+        delTodo(el.getAttribute("data-edit-del"));
+        composer=null; renderAll(); toast("훈련을 지웠어요.");
+        return;
+      }
+      if(up(e.target,"[data-edit-save]")){
+        var txt=(composer.text||"").trim();
+        if(!txt){composer.err="훈련 이름을 적어 주세요.";renderAll();return;}
+        var cn=parseInt(composer.count,10); if(!(cn>0)) cn=null;
+        var unit=composer.unit||"개", tid=composer.editId;
+        state.todos.forEach(function(x){
+          if(x.id!==tid) return;
+          x.text=txt;
+          if(cn){x.count=cn;x.unit=unit;} else {delete x.count;delete x.unit;}
+          x.u=Date.now();
+        });
+        save(); composer=null; renderAll(); toast("훈련을 고쳤어요.");
+        return;
+      }
+    }
+
     /* 할 일 만들기 폼 */
     if((el=up(e.target,"[data-open-compose]"))){
       openComposer(el.getAttribute("data-open-compose"),el.getAttribute("data-where"));
@@ -1914,6 +2071,17 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     }
     if(up(e.target,"#syncOff")){disconnectSync();toast("함께 보기를 껐어요. 기록은 이 폰에 그대로 있어요.");return;}
 
+    if(up(e.target,"#ruleSave")){
+      var dEl=$("ruleDays"), cEl=$("ruleCount");
+      var nd=parseInt(dEl?dEl.value:"",10), nc=parseInt(cEl?cEl.value:"",10);
+      if(!(nd>=1&&nd<=365)||!(nc>=1&&nc<=99)){
+        ruleMsg="며칠(1~365)과 스티커 개수(1~99)를 확인해 주세요."; renderKeep(); return;
+      }
+      state.rule={days:nd,count:nc}; state.ruleAt=Date.now(); save();
+      ruleMsg=""; renderAll();
+      toast(nd+"일 완성마다 칭찬 스티커 "+nc+"개로 정했어요.");
+      return;
+    }
     if(up(e.target,"#doExport")){exportData();return;}
     if(up(e.target,"#doImport")||up(e.target,"#doImport2")){pickFile();return;}
     if(up(e.target,"#doInstall")){
@@ -2041,6 +2209,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   $("prev").innerHTML=icon("left");
   $("next").innerHTML=icon("right");
   rollover();
+  if(normOrder()) save();   /* 예전 훈련에 순서 번호를 매긴다 */
   booted=true;
   checkPersist();
   readLinkConfig();   /* 공유 링크로 열었으면 설정을 받아 둔다 */
