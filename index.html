@@ -427,7 +427,7 @@ header .mark svg{width:100%;height:100%;display:block}
 }
 .day{
   background:var(--surface-2);aspect-ratio:1/1;min-height:44px;position:relative;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   padding:2px;overflow:hidden;-webkit-appearance:none;appearance:none;
 }
 /* aspect-ratio 미지원 구형 웹뷰 대비 — 정사각형에 가깝게 유지 */
@@ -445,20 +445,23 @@ header .mark svg{width:100%;height:100%;display:block}
    '얼마나 했나'를 한 줄로 보여 준다 */
 .prog{display:block;width:52%;min-width:15px;height:4px;margin-top:3px;
   border-radius:3px;background:var(--line);overflow:hidden}
-.prog i{display:block;height:100%;border-radius:3px;background:var(--amber)}
+/* 채운 만큼 초록으로 — 체크한 훈련과 같은 색 */
+.prog i{display:block;height:100%;border-radius:3px;background:var(--pulse)}
 .day.missed .n{color:var(--ink-3)}
 .day.full{background:var(--pulse-wash)}
-.day .dst{width:21px;height:21px}
-.day .dst .st{width:21px;height:21px}
+/* 스티커와 숫자 상자는 한 칸(한 변 40px 안팎) 안에 세로로 나란히 들어가야 한다.
+   숫자 상자 22 + 사이 2 + 스티커 16 + 여백 4 = 44 — 칸을 넘지 않는 값들이다. */
+.day .dst{width:16px;height:16px}
+.day .dst .st{width:16px;height:16px}
 /* 오늘 표시 · 고른 날 표시 — 둘 다 날짜 숫자 뒤의 같은 둥근 네모를 쓴다.
    칸 전체에 테두리를 두르면 격자선·소수 열 너비와 겹쳐 한쪽 변만
    굵어 보이므로, 숫자 뒤 상자에만 얹는다.
    오늘은 초록으로 채우고, 고른 날은 보라 테두리를 두른다. */
 .day.today .n,.day.sel .n{
   flex:none;
-  width:25px;height:25px;
+  width:22px;height:22px;
   display:flex;align-items:center;justify-content:center;
-  border-radius:8px;
+  border-radius:7px;
   font-weight:600;
 }
 .day.today .n{background:var(--pulse);color:var(--pulse-ink)}
@@ -466,7 +469,7 @@ header .mark svg{width:100%;height:100%;display:block}
 /* 고른 날 — 같은 둥근 네모에 보라 테두리를 두른다.
    오늘을 고르든 다른 날을 고르든 테두리의 모양·두께·색이 똑같고,
    오늘이면 그 안이 초록으로 차 있을 뿐이다. */
-.day.sel .n{box-shadow:0 0 0 2.5px var(--violet)}
+.day.sel .n{box-shadow:inset 0 0 0 2.5px var(--violet)}
 .day.sel{z-index:1}
 /* 달력 칸을 누르면 브라우저가 칸 바깥에 초점선(초록)을 남긴다 —
    누른 날은 어차피 보라 테두리로 표시되므로 초점선은 지운다.
@@ -479,8 +482,8 @@ header .mark svg{width:100%;height:100%;display:block}
 .cal button:focus{outline:none}
 .cal button:focus-visible{outline:none}
 /* 키보드로 옮겨 다닐 때만 같은 보라 테두리가 따라온다 */
-.day:focus-visible .n{box-shadow:0 0 0 2.5px var(--violet)}
-.day.sel:focus .n{box-shadow:0 0 0 2.5px var(--violet)}
+.day:focus-visible .n{box-shadow:inset 0 0 0 2.5px var(--violet)}
+.day.sel:focus .n{box-shadow:inset 0 0 0 2.5px var(--violet)}
 
 .note{font-size:var(--fs-sm);color:var(--ink-2);background:var(--bg1);
   border-radius:var(--r-sm);padding:8px 10px;margin-top:9px;line-height:1.5}
@@ -576,6 +579,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 .syncbox p{font-size:var(--fs-2xs);color:var(--ink-3);line-height:1.6;margin:0}
 .syncbox p b{font-weight:600;color:var(--ink-2)}
 .syncbox .sst{font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:3px}
+.syncbox p.hint{margin-top:5px;padding:7px 9px;background:var(--bg1);border-radius:var(--r-sm)}
 .syncbox .sst .warn{color:var(--coral)}
 .syncbox .acts{display:flex;gap:7px;margin-top:9px}
 .syncbox .acts .btn{flex:1}
@@ -609,7 +613,9 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 @media (max-width:359px){
   .wrap{padding-left:calc(12px + var(--safe-l));padding-right:calc(12px + var(--safe-r));gap:16px}
   .board .cell{padding:6px 6px 7px}
-  .day .dst,.day .dst .st{width:18px;height:18px}
+  .day{gap:1px;padding:1px}
+  .day .dst,.day .dst .st{width:13px;height:13px}
+  .day.today .n,.day.sel .n{width:19px;height:19px;border-radius:6px}
   .prog{width:60%}
   .badge{font-size:var(--fs-md);padding:4px 9px 4px 7px}
 }
@@ -660,7 +666,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-22m</span>
+    <span class="ver">v2026-09-23c</span>
   </footer>
 </div>
 
@@ -1496,9 +1502,13 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   /* --- 함께 보기 칸 --- */
   var syncForm=false, syncMsg="";
 
+  /* 도아 킥이 쓰는 데이터베이스 주소 — 입력칸에 미리 채워 둔다.
+     다른 곳을 쓰고 싶으면 주소를 지우고 새로 넣은 뒤 연결을 누르면 된다. */
+  var DEFAULT_DB="https://doa-kick-default-rtdb.asia-southeast1.firebasedatabase.app";
+
   function prefillDb(){
     var o=otherSync();
-    return o?o.db:"";
+    return (o&&o.db)||DEFAULT_DB;
   }
 
   function syncBox(){
@@ -1518,10 +1528,13 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
           '한 번만 설정하면 링크를 보내는 것으로 끝나요.</p>'+
           '<div class="acts"><button class="btn" id="syncStart">'+icon("link")+'함께 보기 설정</button></div>';
       }else{
-        body=(prefillDb()
+        var mate=otherSync();
+        body=(mate
             ? '<p>다른 앱에서 쓰던 주소를 채워 뒀어요. <b>연결</b>만 누르면 두 앱이 같은 곳을 보게 돼요.</p>'
-            : '<p>Firebase 실시간 데이터베이스 주소를 붙여넣어 주세요. '+
-              '<b>https://</b> 로 시작하고 <b>firebasedatabase.app</b> 으로 끝나는 주소예요.</p>')+
+            : '<p>쓰던 주소를 미리 채워 뒀어요. <b>연결</b>만 누르면 돼요. '+
+              '다른 데이터베이스를 쓰려면 주소를 지우고 새로 넣어 주세요.</p>'+
+              '<p class="hint">이 폰에서 새로 연결하면 <b>새 방</b>이 만들어져요. '+
+              '다른 사람과 같은 기록을 보려면 그 사람이 보낸 <b>링크로 열어야</b> 해요.</p>')+
           '<div class="fld"><input type="text" id="syncUrlIn" value="'+esc(prefillDb())+'" '+
           'placeholder="https://....firebasedatabase.app" '+
           'inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></div>'+
