@@ -427,8 +427,8 @@ header .mark svg{width:100%;height:100%;display:block}
 }
 .day{
   background:var(--surface-2);aspect-ratio:1/1;min-height:44px;position:relative;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  padding:2px;overflow:hidden;-webkit-appearance:none;appearance:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  padding:1px;overflow:hidden;-webkit-appearance:none;appearance:none;
 }
 /* aspect-ratio 미지원 구형 웹뷰 대비 — 정사각형에 가깝게 유지 */
 @supports not (aspect-ratio:1/1){
@@ -449,19 +449,20 @@ header .mark svg{width:100%;height:100%;display:block}
 .prog i{display:block;height:100%;border-radius:3px;background:var(--pulse)}
 .day.missed .n{color:var(--ink-3)}
 .day.full{background:var(--pulse-wash)}
-/* 스티커와 숫자 상자는 한 칸(한 변 40px 안팎) 안에 세로로 나란히 들어가야 한다.
-   숫자 상자 22 + 사이 2 + 스티커 16 + 여백 4 = 44 — 칸을 넘지 않는 값들이다. */
-.day .dst{width:16px;height:16px}
-.day .dst .st{width:16px;height:16px}
+/* 스티커와 숫자 상자는 한 칸(한 변 46px 안팎) 안에 세로로 나란히 들어가야 한다.
+   숫자 상자 26 + 사이 1 + 스티커 15 + 여백 2 = 44 — 칸을 넘지 않는 값들이다.
+   상자를 키운 만큼 간격과 스티커에서 덜어냈다. */
+.day .dst{width:15px;height:15px}
+.day .dst .st{width:15px;height:15px}
 /* 오늘 표시 · 고른 날 표시 — 둘 다 날짜 숫자 뒤의 같은 둥근 네모를 쓴다.
    칸 전체에 테두리를 두르면 격자선·소수 열 너비와 겹쳐 한쪽 변만
    굵어 보이므로, 숫자 뒤 상자에만 얹는다.
    오늘은 초록으로 채우고, 고른 날은 보라 테두리를 두른다. */
 .day.today .n,.day.sel .n{
   flex:none;
-  width:22px;height:22px;
+  width:26px;height:26px;
   display:flex;align-items:center;justify-content:center;
-  border-radius:7px;
+  border-radius:8px;
   font-weight:600;
 }
 .day.today .n{background:var(--pulse);color:var(--pulse-ink)}
@@ -613,9 +614,8 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
 @media (max-width:359px){
   .wrap{padding-left:calc(12px + var(--safe-l));padding-right:calc(12px + var(--safe-r));gap:16px}
   .board .cell{padding:6px 6px 7px}
-  .day{gap:1px;padding:1px}
-  .day .dst,.day .dst .st{width:13px;height:13px}
-  .day.today .n,.day.sel .n{width:19px;height:19px;border-radius:6px}
+  .day .dst,.day .dst .st{width:12px;height:12px}
+  .day.today .n,.day.sel .n{width:21px;height:21px;border-radius:7px}
   .prog{width:60%}
   .badge{font-size:var(--fs-md);padding:4px 9px 4px 7px}
 }
@@ -666,7 +666,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-23c</span>
+    <span class="ver">v2026-09-23d</span>
   </footer>
 </div>
 
