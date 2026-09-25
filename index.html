@@ -8,7 +8,7 @@
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="도아 킥">
+<meta name="apple-mobile-web-app-title" content="오늘도 도아 킥">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="application-name" content="도아 훈련">
 <title>오늘도 도아 킥</title>
@@ -688,7 +688,7 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
   <footer>
     달력에서 날짜를 누르면 그날 훈련을 보고 고칠 수 있어요.<br>
     기록은 이 기기에 저장돼요. 가끔 백업 파일로 내보내 두세요.<br>
-    <span class="ver">v2026-09-25a</span>
+    <span class="ver">v2026-09-25c</span>
   </footer>
 </div>
 
@@ -1754,12 +1754,16 @@ header .title,.today-date,.cal-title,.board .v,.keep h2,.install h2,
     /* 홈 화면 앱은 브라우저와 저장 공간이 따로다 —
        설치 직후 기록이 비어 있으면 옮겨오는 길을 알려준다 */
     var fresh=!state.savedAt&&!state.todos.length;
-    if(!isStandalone()||!fresh||hidden("carry")){wrap.innerHTML="";return;}
-    wrap.innerHTML='<div class="carryover"><h2>브라우저에서 쓰던 기록 옮기기</h2>'+
-      '<p>홈 화면 앱은 브라우저와 저장 공간이 따로예요. '+
-      '브라우저에서 <b>백업 파일 저장</b>을 누른 뒤, 여기서 불러오면 그대로 이어집니다.</p>'+
+    /* 함께 보기가 켜져 있으면 기록은 인터넷으로 따라오므로 이 안내는 필요 없다 */
+    if(!isStandalone()||!fresh||hidden("carry")||sync){wrap.innerHTML="";return;}
+    wrap.innerHTML='<div class="carryover"><h2>기록 이어오기</h2>'+
+      '<p>홈 화면 앱은 브라우저와 저장 공간이 따로예요. 이어오는 길은 두 가지입니다.</p>'+
+      '<p><b>1. 함께 보기 링크</b> — 쓰던 기기에서 받은 링크를 아래 <b>함께 보기</b> 칸에 '+
+      '붙여넣어 연결하면, 기록이 알아서 내려오고 이후로는 계속 맞춰져요. (권합니다)</p>'+
+      '<p><b>2. 백업 파일</b> — 쓰던 기기에서 <b>백업 파일 저장</b>을 누른 뒤 여기서 불러오면 '+
+      '그 시점의 기록만 옮겨옵니다.</p>'+
       '<div class="acts"><button class="btn primary" id="doImport2">'+icon("up")+'백업 불러오기</button>'+
-      '<button class="btn dismiss" id="noCarry">기록 없어요</button></div></div>';
+      '<button class="btn dismiss" id="noCarry">괜찮아요</button></div></div>';
   }
 
   /* --- 서비스 워커 — 인터넷 없이도 앱이 열리게 --- */
